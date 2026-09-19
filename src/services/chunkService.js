@@ -1,5 +1,5 @@
-const CHUNK_SIZE = 2500; // characters (roughly 600 tokens)
-const OVERLAP = 300;     // shared text between neighbouring chunks
+const CHUNK_SIZE = 1200; // characters (roughly 600 tokens)
+const OVERLAP = 200; // shared text between neighbouring chunks
 
 export function chunkPages(pages) {
   // 1. Break every page into sentence-sized pieces, remembering the page number
@@ -8,13 +8,16 @@ export function chunkPages(pages) {
     const clean = pageText.replace(/\s+/g, " ").trim();
     if (!clean) return;
 
-    const sentences = clean.match(/[^.!?]+[.!?]+["')\]]*\s*|[^.!?]+$/g) || [clean];
+    const sentences = clean.split(/(?<=[.!?])\s+/);
     for (const sentence of sentences) {
       const s = sentence.trim();
       if (!s) continue;
       // Very long "sentences" (tables, code) are cut so no piece exceeds a chunk
       for (let start = 0; start < s.length; start += CHUNK_SIZE) {
-        pieces.push({ text: s.slice(start, start + CHUNK_SIZE) + " ", page: i + 1 });
+        pieces.push({
+          text: s.slice(start, start + CHUNK_SIZE) + " ",
+          page: i + 1,
+        });
       }
     }
   });
@@ -26,7 +29,10 @@ export function chunkPages(pages) {
 
   const pushChunk = () => {
     chunks.push({
-      text: current.map((p) => p.text).join("").trim(),
+      text: current
+        .map((p) => p.text)
+        .join("")
+        .trim(),
       pageNumber: current[0].page,
     });
   };

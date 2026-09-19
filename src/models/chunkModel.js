@@ -20,3 +20,12 @@ export async function getChunksByDocument(documentId) {
   );
   return rows;
 }
+
+export async function saveEmbeddings(items) {
+  for (const { id, embedding } of items) {
+    await pool.execute("UPDATE `Chunk` SET embedding = ? WHERE id = ?", [
+      JSON.stringify(embedding),
+      id,
+    ]);
+  }
+}
