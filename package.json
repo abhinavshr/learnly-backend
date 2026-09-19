@@ -1,0 +1,21 @@
+{
+  "name": "learnly-backend",
+  "version": "1.0.0",
+  "description": "Backend API for Learnly",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "server": "nodemon server.js",
+    "start": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^18.0.1",
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}
