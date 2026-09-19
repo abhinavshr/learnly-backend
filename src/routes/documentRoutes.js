@@ -7,6 +7,15 @@ import {
 } from "../controllers/documentController.js";
 import { requireAuth } from "../middleware/auth.js";
 import { uploadPdf } from "../middleware/upload.js";
+import rateLimit from "express-rate-limit";
+import { askQuestion } from "../controllers/qaController.js";
+
+// AI calls cost money: 20 questions per minute per IP
+const aiLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 20,
+  message: { message: "Too many requests, slow down" },
+});
 
 const router = Router();
 
@@ -16,5 +25,7 @@ router.post("/", uploadPdf, uploadDocument);
 router.get("/", listDocuments);
 router.get("/:id", getDocument);
 router.delete("/:id", removeDocument);
+router.post("/:id/ask", aiLimiter, askQuestion);
+
 
 export default router;
