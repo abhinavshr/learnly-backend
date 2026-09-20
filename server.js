@@ -8,6 +8,7 @@ import { testConnection } from "./src/config/db.js";
 import authRoutes from "./src/routes/authRoutes.js";
 import documentRoutes from "./src/routes/documentRoutes.js";
 import quizRoutes from "./src/routes/quizRoutes.js";
+import attemptRoutes from "./src/routes/attemptRoutes.js";
 
 const app = express();
 
@@ -31,6 +32,7 @@ app.get("/", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/documents", documentRoutes);
 app.use("/api/quizzes", quizRoutes);
+app.use("/api/attempts", attemptRoutes);
 
 // 404 handler (after all routes)
 app.use((req, res) => {
