@@ -29,3 +29,11 @@ export async function saveEmbeddings(items) {
     ]);
   }
 }
+
+export async function getChunkTexts(documentId) {
+  const [rows] = await pool.execute(
+    "SELECT id, chunkIndex, pageNumber, `text` FROM `Chunk` WHERE documentId = ? ORDER BY chunkIndex",
+    [documentId]
+  );
+  return rows;
+}
