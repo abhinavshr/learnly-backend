@@ -1,5 +1,10 @@
-// One generic function that works with Groq, Gemini, OpenRouter and Ollama
-export async function chat({ system, user, maxTokens = 1000, temperature = 0.2 }) {
+import { buildExplainSystemPrompt } from "../prompts/explainPrompt.js";
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// ---------- Core LLM call (works with Gemini, Groq, OpenRouter, Ollama) ----------
+
+async function callLlm(model, { system, user, maxTokens, temperature }) {
   const res = await fetch(`${process.env.LLM_BASE_URL}/chat/completions`, {
     method: "POST",
     headers: {
@@ -7,7 +12,7 @@ export async function chat({ system, user, maxTokens = 1000, temperature = 0.2 }
       Authorization: `Bearer ${process.env.LLM_API_KEY}`,
     },
     body: JSON.stringify({
-      model: process.env.LLM_MODEL,
+      model,
       max_tokens: maxTokens,
       temperature,
       messages: [
@@ -28,24 +33,71 @@ export async function chat({ system, user, maxTokens = 1000, temperature = 0.2 }
   return json.choices?.[0]?.message?.content ?? "";
 }
 
+// Temporary problems worth retrying: overloaded (503) or server errors (500/502/504)
+const isTemporary = (err) => [500, 502, 503, 504].includes(err?.status);
+
+export async function chat({ system, user, maxTokens = 1000, temperature = 0.2 }) {
+  const options = { system, user, maxTokens, temperature };
+  const models = [process.env.LLM_MODEL, process.env.LLM_FALLBACK_MODEL].filter(Boolean);
+
+  let lastError;
+  for (const model of models) {
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        return await callLlm(model, options);
+      } catch (err) {
+        lastError = err;
+        // Wrong key, bad model, rate limit: retrying the same call won't help
+        if (!isTemporary(err)) throw err;
+
+        console.warn(`LLM ${model} unavailable (attempt ${attempt}/3)`);
+        if (attempt < 3) await sleep(attempt * 2000); // waits 2s, then 4s
+      }
+    }
+  }
+  throw lastError;
+}
+
+// ---------- Shared helper ----------
+
+function buildContext(chunks) {
+  return chunks
+    .map((c, i) => `[Source ${i + 1} | page ${c.pageNumber}]\n${c.text}`)
+    .join("\n\n");
+}
+
+// ---------- Q&A ----------
+
 const QA_SYSTEM_PROMPT = `You are a study tutor. Answer the student's question using ONLY the provided context from their study material.
 - If the context does not contain the answer, say: "I couldn't find this in your document."
 - Explain clearly and simply. Do not invent facts.
 - Mention page numbers when helpful, like (page 4).`;
 
 export async function answerFromContext(question, chunks) {
-  const context = chunks
-    .map((c, i) => `[Source ${i + 1} | page ${c.pageNumber}]\n${c.text}`)
-    .join("\n\n");
-
   return chat({
     system: QA_SYSTEM_PROMPT,
-    user: `<context>\n${context}\n</context>\n\nQuestion: ${question}`,
+    user: `<context>\n${buildContext(chunks)}\n</context>\n\nQuestion: ${question}`,
   });
 }
 
+// ---------- Explain like a beginner ----------
+
+export async function explainFromContext(topic, chunks, level = "beginner") {
+  return chat({
+    system: buildExplainSystemPrompt(level),
+    user: `<context>\n${buildContext(chunks)}\n</context>\n\nTopic to explain: ${topic}`,
+    maxTokens: 1500,
+    temperature: 0.4,
+  });
+}
+
+// ---------- Errors ----------
+
 // Turns provider errors into safe messages for the frontend
 export function toAiError(err) {
+  if (err?.status >= 500) {
+    return { status: 503, message: "AI is busy right now, please try again in a moment" };
+  }
   if (err?.status === 429) {
     return { status: 429, message: "AI is busy or the free limit was reached, try again later" };
   }
