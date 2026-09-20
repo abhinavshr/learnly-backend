@@ -1,5 +1,6 @@
 import { buildExplainSystemPrompt } from "../prompts/explainPrompt.js";
 import { buildQuizSystemPrompt } from "../prompts/quizPrompt.js";
+import { buildSummarySystemPrompt, NOTES_SYSTEM_PROMPT } from "../prompts/summaryPrompt.js";
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -109,6 +110,32 @@ export async function generateQuizText({ chunks, count, difficulty, topic, topic
     user: `<context>\n${buildContext(chunks)}\n</context>\n\n${focus}`,
     maxTokens: 3500,
     temperature: 0.3,
+  });
+}
+
+// ---------- Summary ----------
+
+const SUMMARY_TOKENS = { short: 700, medium: 1500, detailed: 3000 };
+
+export async function summarizeContext(context, length, { fromNotes = false } = {}) {
+  const intro = fromNotes
+    ? "Below are notes taken from consecutive parts of one document. Combine them into one summary."
+    : "Summarize the following study material.";
+
+  return chat({
+    system: buildSummarySystemPrompt(length),
+    user: `${intro}\n\n<context>\n${context}\n</context>`,
+    maxTokens: SUMMARY_TOKENS[length],
+    temperature: 0.3,
+  });
+}
+
+export async function extractNotes(context) {
+  return chat({
+    system: NOTES_SYSTEM_PROMPT,
+    user: `<context>\n${context}\n</context>`,
+    maxTokens: 1500,
+    temperature: 0.2,
   });
 }
 
