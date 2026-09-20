@@ -1,4 +1,5 @@
 import { buildExplainSystemPrompt } from "../prompts/explainPrompt.js";
+import { buildQuizSystemPrompt } from "../prompts/quizPrompt.js";
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -88,6 +89,19 @@ export async function explainFromContext(topic, chunks, level = "beginner") {
     user: `<context>\n${buildContext(chunks)}\n</context>\n\nTopic to explain: ${topic}`,
     maxTokens: 1500,
     temperature: 0.4,
+  });
+}
+
+export async function generateQuizText({ chunks, count, difficulty, topic }) {
+  const focus = topic
+    ? `Focus topic: ${topic}`
+    : "Cover the main topics spread across the context.";
+
+  return chat({
+    system: buildQuizSystemPrompt({ count, difficulty }),
+    user: `<context>\n${buildContext(chunks)}\n</context>\n\n${focus}`,
+    maxTokens: 3500,
+    temperature: 0.3,
   });
 }
 
