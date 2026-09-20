@@ -9,6 +9,7 @@ import authRoutes from "./src/routes/authRoutes.js";
 import documentRoutes from "./src/routes/documentRoutes.js";
 import quizRoutes from "./src/routes/quizRoutes.js";
 import attemptRoutes from "./src/routes/attemptRoutes.js";
+import analyticsRoutes from "./src/routes/analyticsRoutes.js";
 
 const app = express();
 
@@ -33,6 +34,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/documents", documentRoutes);
 app.use("/api/quizzes", quizRoutes);
 app.use("/api/attempts", attemptRoutes);
+app.use("/api/analytics", analyticsRoutes);
 
 // 404 handler (after all routes)
 app.use((req, res) => {

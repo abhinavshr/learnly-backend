@@ -92,10 +92,17 @@ export async function explainFromContext(topic, chunks, level = "beginner") {
   });
 }
 
-export async function generateQuizText({ chunks, count, difficulty, topic }) {
-  const focus = topic
-    ? `Focus topic: ${topic}`
-    : "Cover the main topics spread across the context.";
+// ---------- Quiz generation ----------
+
+// topic  = one topic chosen by the student
+// topics = list of weak topics (exact names are reused so the stats stay consistent)
+export async function generateQuizText({ chunks, count, difficulty, topic, topics }) {
+  let focus = "Cover the main topics spread across the context.";
+  if (topics?.length) {
+    focus = `Focus only on these topics: ${topics.join("; ")}. Use exactly these names as the "topic" value of each question.`;
+  } else if (topic) {
+    focus = `Focus topic: ${topic}`;
+  }
 
   return chat({
     system: buildQuizSystemPrompt({ count, difficulty }),

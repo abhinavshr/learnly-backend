@@ -11,6 +11,7 @@ import rateLimit from "express-rate-limit";
 import { askQuestion } from "../controllers/qaController.js";
 import { explainTopic } from "../controllers/explainController.js";
 import { generateQuiz } from "../controllers/quizController.js";
+import { generateWeakTopicQuiz } from "../controllers/quizController.js";
 
 // AI calls cost money: 20 questions per minute per IP
 const aiLimiter = rateLimit({
@@ -30,5 +31,6 @@ router.delete("/:id", removeDocument);
 router.post("/:id/ask", aiLimiter, askQuestion);
 router.post("/:id/explain", aiLimiter, explainTopic);
 router.post("/:id/quiz", aiLimiter, generateQuiz);
+router.post("/:id/quiz/weak", aiLimiter, generateWeakTopicQuiz);
 
 export default router;
