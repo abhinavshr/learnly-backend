@@ -1,6 +1,7 @@
 import { buildExplainSystemPrompt } from "../prompts/explainPrompt.js";
 import { buildQuizSystemPrompt } from "../prompts/quizPrompt.js";
 import { buildSummarySystemPrompt, NOTES_SYSTEM_PROMPT } from "../prompts/summaryPrompt.js";
+import { buildFlashcardSystemPrompt } from "../prompts/flashcardPrompt.js";
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -109,6 +110,22 @@ export async function generateQuizText({ chunks, count, difficulty, topic, topic
     system: buildQuizSystemPrompt({ count, difficulty }),
     user: `<context>\n${buildContext(chunks)}\n</context>\n\n${focus}`,
     maxTokens: 3500,
+    temperature: 0.3,
+  });
+}
+
+export async function generateFlashcardText({ chunks, count, topic, topics }) {
+  let focus = "Cover the main topics spread across the context.";
+  if (topics?.length) {
+    focus = `Focus only on these topics: ${topics.join("; ")}. Use exactly these names as the "topic" value of each card.`;
+  } else if (topic) {
+    focus = `Focus topic: ${topic}`;
+  }
+
+  return chat({
+    system: buildFlashcardSystemPrompt(count),
+    user: `<context>\n${buildContext(chunks)}\n</context>\n\n${focus}`,
+    maxTokens: 3000,
     temperature: 0.3,
   });
 }

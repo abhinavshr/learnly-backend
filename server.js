@@ -10,6 +10,7 @@ import documentRoutes from "./src/routes/documentRoutes.js";
 import quizRoutes from "./src/routes/quizRoutes.js";
 import attemptRoutes from "./src/routes/attemptRoutes.js";
 import analyticsRoutes from "./src/routes/analyticsRoutes.js";
+import flashcardRoutes from "./src/routes/flashcardRoutes.js";
 
 const app = express();
 
@@ -35,6 +36,7 @@ app.use("/api/documents", documentRoutes);
 app.use("/api/quizzes", quizRoutes);
 app.use("/api/attempts", attemptRoutes);
 app.use("/api/analytics", analyticsRoutes);
+app.use("/api/flashcards", flashcardRoutes);
 
 // 404 handler (after all routes)
 app.use((req, res) => {
