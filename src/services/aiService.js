@@ -2,6 +2,7 @@ import { buildExplainSystemPrompt } from "../prompts/explainPrompt.js";
 import { buildQuizSystemPrompt } from "../prompts/quizPrompt.js";
 import { buildSummarySystemPrompt, NOTES_SYSTEM_PROMPT } from "../prompts/summaryPrompt.js";
 import { buildFlashcardSystemPrompt } from "../prompts/flashcardPrompt.js";
+import { PLAN_FOCUS_SYSTEM_PROMPT, describeTasks } from "../prompts/planPrompt.js";
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -154,6 +155,30 @@ export async function extractNotes(context) {
     maxTokens: 1500,
     temperature: 0.2,
   });
+}
+
+// Writes one friendly sentence per day. Falls back to a plain sentence if the AI fails,
+// since the schedule itself must never depend on the AI being available.
+export async function generateDayFocusLines(days) {
+  const fallback = (d) => `Day ${d.dayIndex}: focused study session (${d.tasks.reduce((s, t) => s + t.minutes, 0)} minutes).`;
+
+  try {
+    const raw = await chat({
+      system: PLAN_FOCUS_SYSTEM_PROMPT,
+      user: days.map(describeTasks).join("\n"),
+      maxTokens: 1200,
+      temperature: 0.5,
+    });
+
+    const cleaned = raw.replace(/```json|```/gi, "").trim();
+    const parsed = JSON.parse(cleaned.slice(cleaned.indexOf("{"), cleaned.lastIndexOf("}") + 1));
+    const byIndex = new Map(parsed.days.map((d) => [d.dayIndex, d.focus]));
+
+    return days.map((d) => byIndex.get(d.dayIndex) || fallback(d));
+  } catch (err) {
+    console.warn("Falling back to plain focus lines:", err.message);
+    return days.map(fallback);
+  }
 }
 
 // ---------- Errors ----------
