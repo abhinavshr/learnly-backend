@@ -13,6 +13,7 @@ import { explainTopic } from "../controllers/explainController.js";
 import { generateQuiz } from "../controllers/quizController.js";
 import { generateWeakTopicQuiz } from "../controllers/quizController.js";
 import { generateSummary, getSummary } from "../controllers/summaryController.js";
+import { generateFlashcards, listFlashcards } from "../controllers/flashcardController.js";
 
 // AI calls cost money: 20 questions per minute per IP
 const aiLimiter = rateLimit({
@@ -35,5 +36,7 @@ router.post("/:id/quiz", aiLimiter, generateQuiz);
 router.post("/:id/quiz/weak", aiLimiter, generateWeakTopicQuiz);
 router.post("/:id/summary", aiLimiter, generateSummary);
 router.get("/:id/summary", getSummary);
+router.post("/:id/flashcards", aiLimiter, generateFlashcards);
+router.get("/:id/flashcards", listFlashcards);
 
 export default router;
