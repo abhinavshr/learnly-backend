@@ -1,10 +1,12 @@
 import jwt from "jsonwebtoken";
 
 export function requireAuth(req, res, next) {
-  const header = req.headers.authorization || "";
-  const [scheme, token] = header.split(" ");
+  // Cookie is the real auth path now; Authorization header stays as a fallback
+  // so Postman/API testing without a browser still works.
+  const headerToken = (req.headers.authorization || "").split(" ")[1];
+  const token = req.cookies?.token || headerToken;
 
-  if (scheme !== "Bearer" || !token) {
+  if (!token) {
     return res.status(401).json({ message: "Authentication required" });
   }
 
