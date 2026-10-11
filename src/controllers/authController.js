@@ -1,3 +1,30 @@
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import { z } from "zod";
+import {
+  createUser,
+  findUserByEmail,
+  findUserById,
+} from "../models/userModel.js";
+
+const registerSchema = z.object({
+  name: z.string().trim().min(2).max(100),
+  email: z.string().trim().toLowerCase().email().max(255),
+  password: z.string().min(8).max(72), // bcrypt ignores anything past 72 bytes
+});
+
+const loginSchema = z.object({
+  email: z.string().trim().toLowerCase().email(),
+  password: z.string().min(1),
+});
+
+function formatZodError(error) {
+  return error.issues.map((i) => ({
+    field: i.path.join("."),
+    message: i.message,
+  }));
+}
+
 const COOKIE_NAME = "token";
 const COOKIE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 days, matches the JWT's expiresIn
 
@@ -18,7 +45,9 @@ export async function register(req, res, next) {
   try {
     const parsed = registerSchema.safeParse(req.body);
     if (!parsed.success) {
-      return res.status(400).json({ message: "Validation failed", errors: formatZodError(parsed.error) });
+      return res
+        .status(400)
+        .json({ message: "Validation failed", errors: formatZodError(parsed.error) });
     }
 
     const { name, email, password } = parsed.data;
@@ -52,7 +81,9 @@ export async function login(req, res, next) {
   try {
     const parsed = loginSchema.safeParse(req.body);
     if (!parsed.success) {
-      return res.status(400).json({ message: "Validation failed", errors: formatZodError(parsed.error) });
+      return res
+        .status(400)
+        .json({ message: "Validation failed", errors: formatZodError(parsed.error) });
     }
 
     const { email, password } = parsed.data;
